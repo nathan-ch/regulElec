@@ -1073,6 +1073,22 @@
             </div>
           </div>
 
+          <div class="form-group" style="grid-column: span 2; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.6rem 0.8rem;">
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <input type="checkbox" id="cfg-school-enabled" style="width:18px; height:18px; cursor:pointer;" onchange="App.toggleSchoolInputs()">
+              <label for="cfg-school-enabled" style="font-weight:600; cursor:pointer; margin:0; color:var(--slate-800);">🏫 Bâtiment scolaire (vacances scolaires)</label>
+            </div>
+            <div id="cfg-school-wrap" style="display:none; gap:0.6rem; align-items:center; margin-top:0.5rem; flex-wrap:wrap; font-size:0.875rem; color:var(--slate-600);">
+              <span>Zone scolaire :</span>
+              <select id="cfg-school-zone" class="form-control" style="font-size:0.85rem; padding:0.25rem 0.5rem; width:auto;" onchange="App.recompute()">
+                <option value="A" selected>Zone A</option>
+                <option value="B">Zone B</option>
+                <option value="C">Zone C</option>
+              </select>
+              <span style="font-size:0.8rem; color:var(--slate-500);">(Exclut les vacances du profil de semaine et permet de simuler le réduit 24h/24)</span>
+            </div>
+          </div>
+
           <div class="form-group">
             <label>Prix de l'électricité (€ TTC / kWh)</label>
             <input type="number" id="cfg-elec-price" class="form-control" step="0.01" value="0.22" style="width:100px;">
@@ -1192,6 +1208,11 @@
               <button type="button" class="curve-toggle-btn active" data-curve="ete" id="btn-toggle-ete" onclick="App.toggleProfilCurve('ete')" title="Afficher ou masquer la Semaine Été">
                 <span class="curve-indicator" style="background:#0284c7;"></span>
                 <span>Semaine Été</span>
+                <span class="toggle-status">✔</span>
+              </button>
+              <button type="button" class="curve-toggle-btn active" data-curve="vacancesHiver" id="btn-toggle-vacancesHiver" onclick="App.toggleProfilCurve('vacancesHiver')" style="display:none;" title="Afficher ou masquer les Vacances Hiver (Lun-Ven en période de vacances scolaires)">
+                <span class="curve-indicator" style="background:#0d9488;"></span>
+                <span>🎒 Vacances Hiver</span>
                 <span class="toggle-status">✔</span>
               </button>
               <button type="button" class="curve-toggle-btn" data-curve="globalHiver" id="btn-toggle-globalHiver" onclick="App.toggleProfilCurve('globalHiver')" title="Afficher la moyenne cumulée Semaine + WE (dans le cas d'un bâtiment utilisé de façon identique 7j/7)">
@@ -1411,6 +1432,25 @@
                 </div>
               </div>
 
+              <!-- 4. Vacances Scolaires (visible si bâtiment scolaire activé) -->
+              <div class="sim-box" id="sim-box-vacances" style="grid-column: 1 / -1; display:none; background:#f0fdf4; border-color:#86efac;">
+                <div class="sim-box-title" style="color:#166534;">🎒 Vacances Scolaires (Inoccupation prolongée)</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+                  <div>
+                    <label class="checkbox-container" style="font-weight:700; color:#15803d;">
+                      <input type="checkbox" id="sim-vacances-enabled" checked onchange="App.runSimulation()">
+                      <span>Appliquer l'abaissement 24h/24 pendant toutes les vacances scolaires</span>
+                    </label>
+                    <div style="font-size:0.82rem; color:#166534; margin-top:0.3rem;">
+                      Pendant les vacances scolaires en saison de chauffe (~8 semaines : Toussaint, Noël, Hiver, Printemps), l'école est fermée : le réduit est maintenu en continu jour et nuit.
+                    </div>
+                  </div>
+                  <div class="diag-tag" id="sim-vacances-zone-badge" style="background:#dcfce7; color:#15803d; font-weight:700;">
+                    Zone A active
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -1438,6 +1478,22 @@
               <div class="kpi-label">Nouvelle Facture Estimée</div>
               <div class="kpi-val"><span id="sim-kpi-bill">0</span> <span class="kpi-unit">€ TTC</span></div>
               <div class="kpi-sub" id="sim-kpi-bill-sub">Au lieu de 0 € actuellement</div>
+            </div>
+          </div>
+
+          <!-- Detail Breakdown Banner -->
+          <div id="sim-breakdown-card" style="margin-top:0.75rem; background:#f8fafc; border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:0.6rem 1rem; display:flex; align-items:center; justify-content:space-around; flex-wrap:wrap; gap:0.75rem; font-size:0.875rem;">
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span style="font-size:1.1rem;">🌙</span>
+              <span><strong>Réduit de Nuit :</strong> <span id="sim-bd-night" style="color:var(--primary); font-weight:700;">0 € (0 kWh)</span></span>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.4rem;">
+              <span style="font-size:1.1rem;">📅</span>
+              <span><strong>Inoccupation Week-end :</strong> <span id="sim-bd-we" style="color:#d97706; font-weight:700;">0 € (0 kWh)</span></span>
+            </div>
+            <div id="sim-bd-vac-wrap" style="display:none; align-items:center; gap:0.4rem;">
+              <span style="font-size:1.1rem;">🎒</span>
+              <span><strong>Vacances Scolaires :</strong> <span id="sim-bd-vac" style="color:#059669; font-weight:700;">0 € (0 kWh)</span></span>
             </div>
           </div>
 
@@ -1470,7 +1526,7 @@
               </div>
               <div class="chart-actions">
                 <span style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem; font-weight:600; color:#ef4444;">
-                  <span style="width:12px; height:3px; background:#ef4444; display:inline-block;"></span> Actuel (sans réduit)
+                  <span style="width:12px; height:3px; background:#ef4444; display:inline-block;"></span> <span id="sim-legend-actuel-label">Actuel (sans réduit)</span>
                 </span>
                 <span style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem; font-weight:600; color:#10b981;">
                   <span style="width:12px; height:3px; background:#10b981; display:inline-block;"></span> Simulé avec réduit (-<span id="sim-legend-deg">3</span>°C)
@@ -1521,7 +1577,7 @@
 
       <h3>4. Intermittence Week-end & Vacances Scolaires</h3>
       <p>
-        Rapport de la consommation moyenne du week-end (samedi/dimanche) par rapport aux jours ouvrés. Dans un bâtiment tertiaire ou scolaire fermé le week-end, le chauffage doit descendre en mode réduit ou hors-gel. Un ratio supérieur à 75% est le signe d'un manque d'asservissement hebdomadaire.
+        Dans un bâtiment fermé le week-end ou pendant les vacances scolaires (comme une école fermée environ 8 semaines pendant la saison de chauffe), le chauffage doit descendre en mode réduit ou hors-gel. Maintenir une consigne de confort 24h/24 lorsque les locaux sont inoccupés constitue un gaspillage énergétique majeur (représentant souvent 10% à 25% de la facture globale). L'activation du mode <em>Bâtiment scolaire</em> permet d'isoler le vrai profil horaire de cours (hors vacances) et de quantifier le gisement d'économies réalisable en appliquant un abaissement continu pendant toutes les vacances.
       </p>
 
       <div style="margin-top:1.5rem; text-align:right;">
@@ -10303,6 +10359,28 @@ nom;date;ID de la variable;valeur
 
   <!-- Application Logic -->
   <script>
+  // CALENDRIER OFFICIEL DES VACANCES SCOLAIRES FRANÇAISES (ZONES A, B, C)
+  const SCHOOL_HOLIDAYS = {
+    A: [
+      ['2023-10-21', '2023-11-05'], ['2023-12-23', '2024-01-07'], ['2024-02-17', '2024-03-03'], ['2024-04-13', '2024-04-28'], ['2024-05-08', '2024-05-12'], ['2024-07-06', '2024-09-01'],
+      ['2024-10-19', '2024-11-03'], ['2024-12-21', '2025-01-05'], ['2025-02-22', '2025-03-09'], ['2025-04-19', '2025-05-04'], ['2025-05-28', '2025-06-01'], ['2025-07-05', '2025-08-31'],
+      ['2025-10-18', '2025-11-02'], ['2025-12-20', '2026-01-04'], ['2026-02-07', '2026-02-22'], ['2026-04-04', '2026-04-19'], ['2026-05-13', '2026-05-17'], ['2026-07-04', '2026-08-31'],
+      ['2026-10-17', '2026-11-01'], ['2026-12-19', '2027-01-03'], ['2027-02-20', '2027-03-07'], ['2027-04-17', '2027-05-02'], ['2027-05-05', '2027-05-09'], ['2027-07-03', '2027-08-31']
+    ],
+    B: [
+      ['2023-10-21', '2023-11-05'], ['2023-12-23', '2024-01-07'], ['2024-02-24', '2024-03-10'], ['2024-04-20', '2024-05-05'], ['2024-05-08', '2024-05-12'], ['2024-07-06', '2024-09-01'],
+      ['2024-10-19', '2024-11-03'], ['2024-12-21', '2025-01-05'], ['2025-02-08', '2025-02-23'], ['2025-04-05', '2025-04-21'], ['2025-05-28', '2025-06-01'], ['2025-07-05', '2025-08-31'],
+      ['2025-10-18', '2025-11-02'], ['2025-12-20', '2026-01-04'], ['2026-02-14', '2026-03-01'], ['2026-04-11', '2026-04-26'], ['2026-05-13', '2026-05-17'], ['2026-07-04', '2026-08-31'],
+      ['2026-10-17', '2026-11-01'], ['2026-12-19', '2027-01-03'], ['2027-02-06', '2027-02-21'], ['2027-04-03', '2027-04-18'], ['2027-05-05', '2027-05-09'], ['2027-07-03', '2027-08-31']
+    ],
+    C: [
+      ['2023-10-21', '2023-11-05'], ['2023-12-23', '2024-01-07'], ['2024-02-10', '2024-02-25'], ['2024-04-06', '2024-04-21'], ['2024-05-08', '2024-05-12'], ['2024-07-06', '2024-09-01'],
+      ['2024-10-19', '2024-11-03'], ['2024-12-21', '2025-01-05'], ['2025-02-15', '2025-03-02'], ['2025-04-12', '2025-04-27'], ['2025-05-28', '2025-06-01'], ['2025-07-05', '2025-08-31'],
+      ['2025-10-18', '2025-11-02'], ['2025-12-20', '2026-01-04'], ['2026-02-21', '2026-03-08'], ['2026-04-18', '2026-05-03'], ['2026-05-13', '2026-05-17'], ['2026-07-04', '2026-08-31'],
+      ['2026-10-17', '2026-11-01'], ['2026-12-19', '2027-01-03'], ['2027-02-13', '2027-02-28'], ['2027-04-10', '2027-04-25'], ['2027-05-05', '2027-05-09'], ['2027-07-03', '2027-08-31']
+    ]
+  };
+
   // REGUL'ELEC APPLICATION CORE
   const App = {
     records: [],
@@ -10314,7 +10392,25 @@ nom;date;ID de la variable;valeur
       semaineHiver: true,
       weHiver: true,
       ete: true,
-      globalHiver: false
+      globalHiver: false,
+      vacancesHiver: true
+    },
+
+    isSchoolHoliday(r, zone = 'A') {
+      const z = (zone || 'A').toUpperCase();
+      const periods = SCHOOL_HOLIDAYS[z] || SCHOOL_HOLIDAYS['A'];
+      const ymd = r.iso ? r.iso.substring(0, 10) : `${r.year}-${String(r.month).padStart(2,'0')}-${String(r.day).padStart(2,'0')}`;
+      for (let i = 0; i < periods.length; i++) {
+        if (ymd >= periods[i][0] && ymd <= periods[i][1]) return true;
+      }
+      // Fallback si hors plage d'années
+      const m = r.month, d = r.day;
+      if ((m === 10 && d >= 19) || (m === 11 && d <= 3)) return true;
+      if ((m === 12 && d >= 20) || (m === 1 && d <= 5)) return true;
+      if ((m === 2 && d >= 15) || (m === 3 && d <= 2)) return true;
+      if ((m === 4 && d >= 15) || (m === 4 && d <= 30)) return true;
+      if ((m === 7 && d >= 6) || m === 8) return true;
+      return false;
     },
     
     init() {
@@ -10465,6 +10561,32 @@ nom;date;ID de la variable;valeur
       }
     },
 
+    toggleSchoolInputs() {
+      const enabled = document.getElementById('cfg-school-enabled').checked;
+      const wrap = document.getElementById('cfg-school-wrap');
+      if (wrap) wrap.style.display = enabled ? 'flex' : 'none';
+
+      const btnVac = document.getElementById('btn-toggle-vacancesHiver');
+      if (btnVac) {
+        btnVac.style.display = enabled ? 'inline-flex' : 'none';
+      }
+
+      const simBoxVac = document.getElementById('sim-box-vacances');
+      if (simBoxVac) simBoxVac.style.display = enabled ? 'block' : 'none';
+      const simBdVacWrap = document.getElementById('sim-bd-vac-wrap');
+      if (simBdVacWrap) simBdVacWrap.style.display = enabled ? 'flex' : 'none';
+
+      const zoneBadge = document.getElementById('sim-vacances-zone-badge');
+      if (zoneBadge) {
+        const zone = document.getElementById('cfg-school-zone').value;
+        zoneBadge.textContent = 'Zone ' + zone + ' active';
+      }
+
+      if (this.records && this.records.length > 0) {
+        this.recompute();
+      }
+    },
+
     applyPreset(preset) {
       this.activePreset = preset;
       document.querySelectorAll('.preset-pill').forEach(el => {
@@ -10474,12 +10596,23 @@ nom;date;ID de la variable;valeur
       if (preset === 'mairie') {
         document.getElementById('cfg-hour-start').value = 8;
         document.getElementById('cfg-hour-end').value = 18;
+        const schoolEl = document.getElementById('cfg-school-enabled');
+        if (schoolEl) schoolEl.checked = false;
+        this.toggleSchoolInputs();
       } else if (preset === 'ecole') {
         document.getElementById('cfg-hour-start').value = 7;
         document.getElementById('cfg-hour-end').value = 18;
+        const schoolEl = document.getElementById('cfg-school-enabled');
+        if (schoolEl) schoolEl.checked = true;
+        const zoneEl = document.getElementById('cfg-school-zone');
+        if (zoneEl) zoneEl.value = 'A';
+        this.toggleSchoolInputs();
       } else if (preset === 'salle') {
         document.getElementById('cfg-hour-start').value = 14;
         document.getElementById('cfg-hour-end').value = 22;
+        const schoolEl = document.getElementById('cfg-school-enabled');
+        if (schoolEl) schoolEl.checked = false;
+        this.toggleSchoolInputs();
       }
       this.recompute();
     },
@@ -10564,6 +10697,10 @@ nom;date;ID de la variable;valeur
       document.getElementById('sim-pct-badge').textContent = `-${pct.toFixed(1)} % sur le chauffage`;
       const legDeg = document.getElementById('sim-legend-deg');
       if (legDeg) legDeg.textContent = deg;
+      const elActuelLabel = document.getElementById('sim-legend-actuel-label');
+      if (elActuelLabel) {
+        elActuelLabel.textContent = this.stats.cfg.schoolEnabled ? 'Actuel (Semaine hors vacances)' : 'Actuel (sans réduit)';
+      }
 
       // Update pill active classes
       document.querySelectorAll('#tab-actions .preset-pill').forEach(btn => {
@@ -10573,6 +10710,13 @@ nom;date;ID de la variable;valeur
       const pTalon = this.stats.pTalonEte;
       let totalSavedKwh = 0;
       let totalSetbackHours = 0;
+      let savedNightKwh = 0;
+      let savedWeKwh = 0;
+      let savedVacKwh = 0;
+
+      const schoolEnabled = this.stats.cfg.schoolEnabled;
+      const simVacancesEl = document.getElementById('sim-vacances-enabled');
+      const simVacancesEnabled = schoolEnabled && (simVacancesEl ? simVacancesEl.checked : true);
 
       const simProfileSum = new Array(24).fill(0);
       const simProfileCount = new Array(24).fill(0);
@@ -10582,35 +10726,52 @@ nom;date;ID de la variable;valeur
       this.records.forEach(r => {
         const isHeating = isHeatingFn(r);
         let isReduced = false;
+        let reducedReason = null;
 
         if (isHeating) {
-          if (r.dayOfWeek >= 1 && r.dayOfWeek <= 5) {
-            // Weekday night
-            if (nightStart > nightEnd) {
-              if (r.hour >= nightStart || r.hour < nightEnd) isReduced = true;
+          const isWd = r.dayOfWeek >= 1 && r.dayOfWeek <= 5;
+          const isHoliday = schoolEnabled && this.stats.cfg.isHoliday(r);
+
+          if (isWd) {
+            if (isHoliday && simVacancesEnabled) {
+              isReduced = true;
+              reducedReason = 'vac';
             } else {
-              if (r.hour >= nightStart && r.hour < nightEnd) isReduced = true;
+              // Weekday night
+              let isNight = false;
+              if (nightStart > nightEnd) {
+                if (r.hour >= nightStart || r.hour < nightEnd) isNight = true;
+              } else {
+                if (r.hour >= nightStart && r.hour < nightEnd) isNight = true;
+              }
+
+              if (isNight) {
+                isReduced = true;
+                reducedReason = 'night';
+              }
             }
           } else if (r.dayOfWeek === 6) {
             // Saturday
             if (!satUsed) {
               isReduced = true;
+              reducedReason = 'we';
             } else {
               if (satStart > satEnd) {
-                if (r.hour < satStart && r.hour >= satEnd) isReduced = true;
+                if (r.hour < satStart && r.hour >= satEnd) { isReduced = true; reducedReason = 'we'; }
               } else {
-                if (r.hour < satStart || r.hour >= satEnd) isReduced = true;
+                if (r.hour < satStart || r.hour >= satEnd) { isReduced = true; reducedReason = 'we'; }
               }
             }
           } else if (r.dayOfWeek === 0) {
             // Sunday
             if (!sunUsed) {
               isReduced = true;
+              reducedReason = 'we';
             } else {
               if (sunStart > sunEnd) {
-                if (r.hour < sunStart && r.hour >= sunEnd) isReduced = true;
+                if (r.hour < sunStart && r.hour >= sunEnd) { isReduced = true; reducedReason = 'we'; }
               } else {
-                if (r.hour < sunStart || r.hour >= sunEnd) isReduced = true;
+                if (r.hour < sunStart || r.hour >= sunEnd) { isReduced = true; reducedReason = 'we'; }
               }
             }
           }
@@ -10627,10 +10788,15 @@ nom;date;ID de la variable;valeur
           const heatPart = Math.max(0, r.val - pT - specPart);
           const savedKwh = heatPart * (pct / 100);
           totalSavedKwh += savedKwh;
+          if (reducedReason === 'night') savedNightKwh += savedKwh;
+          else if (reducedReason === 'we') savedWeKwh += savedKwh;
+          else if (reducedReason === 'vac') savedVacKwh += savedKwh;
+
           simVal = Math.max(pT + specPart, r.val - savedKwh);
         }
 
-        if (isHeating && r.dayOfWeek >= 1 && r.dayOfWeek <= 5) {
+        // Only average into the typical weekday profile if it matches stats.profileSemaineHiver's domain (non-holiday weekdays)
+        if (isHeating && r.dayOfWeek >= 1 && r.dayOfWeek <= 5 && (!schoolEnabled || !this.stats.cfg.isHoliday(r))) {
           simProfileSum[r.hour] += simVal;
           simProfileCount[r.hour]++;
         }
@@ -10661,6 +10827,16 @@ nom;date;ID de la variable;valeur
 
       document.getElementById('sim-kpi-bill').textContent = `${Math.round(simYearEur).toLocaleString('fr-FR')} €`;
       document.getElementById('sim-kpi-bill-sub').textContent = `Au lieu de ${Math.round(totalYearEur).toLocaleString('fr-FR')} € actuellement`;
+
+      // Update Detail Breakdown Banner
+      const elBdNight = document.getElementById('sim-bd-night');
+      if (elBdNight) elBdNight.textContent = `${Math.round(savedNightKwh * price).toLocaleString('fr-FR')} € (${Math.round(savedNightKwh).toLocaleString('fr-FR')} kWh)`;
+      const elBdWe = document.getElementById('sim-bd-we');
+      if (elBdWe) elBdWe.textContent = `${Math.round(savedWeKwh * price).toLocaleString('fr-FR')} € (${Math.round(savedWeKwh).toLocaleString('fr-FR')} kWh)`;
+      const elBdVac = document.getElementById('sim-bd-vac');
+      if (elBdVac) elBdVac.textContent = `${Math.round(savedVacKwh * price).toLocaleString('fr-FR')} € (${Math.round(savedVacKwh).toLocaleString('fr-FR')} kWh)`;
+      const elBdVacWrap = document.getElementById('sim-bd-vac-wrap');
+      if (elBdVacWrap) elBdVacWrap.style.display = (schoolEnabled && simVacancesEnabled) ? 'flex' : 'none';
 
       // Synchronize Main KPI Card & Diagnostic Alert Tag with simulation
       const elValGains = document.getElementById('val-gains-eur');
@@ -10886,6 +11062,10 @@ nom;date;ID de la variable;valeur
       const acEnabled = acEnabledEl ? acEnabledEl.checked : false;
       const acStartStr = (acStartEl && acStartEl.value.trim()) || '15/06';
       const acEndStr = (acEndEl && acEndEl.value.trim()) || '15/09';
+      const schoolEnabledEl = document.getElementById('cfg-school-enabled');
+      const schoolZoneEl = document.getElementById('cfg-school-zone');
+      const schoolEnabled = schoolEnabledEl ? schoolEnabledEl.checked : false;
+      const schoolZone = (schoolZoneEl && schoolZoneEl.value) || 'A';
 
       return {
         hourStart: parseInt(document.getElementById('cfg-hour-start').value, 10),
@@ -10900,9 +11080,12 @@ nom;date;ID de la variable;valeur
         acEnabled: acEnabled,
         acStartStr: acStartStr,
         acEndStr: acEndStr,
+        schoolEnabled: schoolEnabled,
+        schoolZone: schoolZone,
         isHeating: this.createDateRangeChecker(heatStartStr, heatEndStr, '15/10', '15/04'),
         isSummer: this.createDateRangeChecker(summerStartStr, summerEndStr, '01/06', '31/08'),
-        isAc: acEnabled ? this.createDateRangeChecker(acStartStr, acEndStr, '15/06', '15/09') : () => false
+        isAc: acEnabled ? this.createDateRangeChecker(acStartStr, acEndStr, '15/06', '15/09') : () => false,
+        isHoliday: schoolEnabled ? (r) => App.isSchoolHoliday(r, schoolZone) : () => false
       };
     },
 
@@ -10948,13 +11131,30 @@ nom;date;ID de la variable;valeur
 
       const insightProfil = document.getElementById('insight-profil24h');
       if (insightProfil) {
+        const isSchool = s.cfg.schoolEnabled;
         insightProfil.innerHTML = `
           <strong>Diagnostic du profil 24h & options d'affichage :</strong>
-          Profil moyen calculé sur la période de chauffe active <strong>${s.cfg.heatStartStr} au ${s.cfg.heatEndStr}</strong> (Semaine : <strong>${s.pSemaineHiver.toFixed(2)} kW</strong>, Week-end : <strong>${s.pWeHiver.toFixed(2)} kW</strong>, Nuit : <strong>${s.pNuitHiver.toFixed(2)} kW</strong>).
-          La comparaison Semaine / Week-end permet d'analyser l'intermittence hebdomadaire. Si le bâtiment est occupé ou chauffé de manière identique 7j/7 (logement, accueil continu, etc.), activez la courbe violette <strong>« Cumul Semaine + WE (7j/7) »</strong> pour observer le cycle moyen global tous jours confondus.
+          Profil moyen calculé sur la période de chauffe active <strong>${s.cfg.heatStartStr} au ${s.cfg.heatEndStr}</strong> (Semaine : <strong>${s.pSemaineHiver.toFixed(2)} kW</strong>${isSchool && s.profileVacancesHiver ? `, Vacances scolaires : <strong>${(s.profileVacancesHiver.reduce((a,b)=>a+b,0)/24).toFixed(2)} kW</strong>` : ''}, Week-end : <strong>${s.pWeHiver.toFixed(2)} kW</strong>, Nuit : <strong>${s.pNuitHiver.toFixed(2)} kW</strong>).
+          La comparaison Semaine / Week-end permet d'analyser l'intermittence hebdomadaire.${isSchool ? ` En mode <strong>Bâtiment scolaire</strong> (Zone ${s.cfg.schoolZone}), la courbe Semaine isole les jours de classe et la courbe turquoise affiche les vacances scolaires.` : ''} Si le bâtiment est occupé ou chauffé de manière identique 7j/7 (logement, accueil continu, etc.), activez la courbe violette <strong>« Cumul Semaine + WE (7j/7) »</strong> pour observer le cycle moyen global tous jours confondus.
           <em>(Pour analyser le cœur de l'hiver le plus rigoureux, modifiez les dates de chauffe dans les Paramètres, ex : 01/12 au 28/02).</em>
         `;
       }
+
+      // School mode UI elements synchronization
+      const isSchool = s.cfg.schoolEnabled;
+      const btnToggleVac = document.getElementById('btn-toggle-vacancesHiver');
+      if (btnToggleVac) btnToggleVac.style.display = isSchool ? 'inline-flex' : 'none';
+
+      const btnToggleWd = document.getElementById('btn-toggle-semaineHiver');
+      if (btnToggleWd) {
+        const spanTxt = btnToggleWd.querySelector('span:nth-child(2)');
+        if (spanTxt) spanTxt.textContent = isSchool ? 'Semaine hiver hors vacances' : 'Semaine Hiver';
+      }
+
+      const simBoxVac = document.getElementById('sim-box-vacances');
+      if (simBoxVac) simBoxVac.style.display = isSchool ? 'block' : 'none';
+      const zoneBadge = document.getElementById('sim-vacances-zone-badge');
+      if (zoneBadge) zoneBadge.textContent = `Zone ${s.cfg.schoolZone} active`;
 
       document.getElementById('val-taux-reduit').textContent = s.tauxReduit.toFixed(1);
       const kpiReduit = document.getElementById('kpi-taux-reduit');
@@ -11071,15 +11271,20 @@ nom;date;ID de la variable;valeur
         pTalonEteP10 = 0.3;
       }
 
-      // 2. Winter Night
-      const winterNightRecs = records.filter(r => cfg.isHeating(r) && r.hour >= cfg.nightStart && r.hour <= cfg.nightEnd);
+      // 2. Winter Night (Weekdays, consistent with winterDayRecs)
+      const winterNightRecs = records.filter(r => 
+        cfg.isHeating(r) && 
+        r.dayOfWeek >= 1 && r.dayOfWeek <= 5 && 
+        r.hour >= cfg.nightStart && r.hour <= cfg.nightEnd && 
+        (!cfg.schoolEnabled || !cfg.isHoliday(r))
+      );
       let pNuitHiver = pTalonEte;
       if (winterNightRecs.length > 0) {
         pNuitHiver = winterNightRecs.reduce((acc, r) => acc + r.val, 0) / winterNightRecs.length;
       }
 
       // 3. Winter Day (Weekdays 1..5, within occupied hours)
-      const winterDayRecs = records.filter(r => cfg.isHeating(r) && r.dayOfWeek >= 1 && r.dayOfWeek <= 5 && r.hour >= cfg.hourStart && r.hour < cfg.hourEnd);
+      const winterDayRecs = records.filter(r => cfg.isHeating(r) && r.dayOfWeek >= 1 && r.dayOfWeek <= 5 && r.hour >= cfg.hourStart && r.hour < cfg.hourEnd && (!cfg.schoolEnabled || !cfg.isHoliday(r)));
       let pJourHiver = pNuitHiver;
       if (winterDayRecs.length > 0) {
         pJourHiver = winterDayRecs.reduce((acc, r) => acc + r.val, 0) / winterDayRecs.length;
@@ -11091,7 +11296,7 @@ nom;date;ID de la variable;valeur
       const tauxReduit = Math.max(0, Math.min(100, (1 - (surpuissanceNuit / deltaChaufJour)) * 100));
 
       // 5. Winter Week vs Weekend
-      const winterWeekRecs = records.filter(r => cfg.isHeating(r) && r.dayOfWeek >= 1 && r.dayOfWeek <= 5);
+      const winterWeekRecs = records.filter(r => cfg.isHeating(r) && r.dayOfWeek >= 1 && r.dayOfWeek <= 5 && (!cfg.schoolEnabled || !cfg.isHoliday(r)));
       const winterWeRecs = records.filter(r => cfg.isHeating(r) && (r.dayOfWeek === 0 || r.dayOfWeek === 6));
       const pSemaineHiver = winterWeekRecs.length > 0 ? (winterWeekRecs.reduce((a,r) => a+r.val,0) / winterWeekRecs.length) : 0;
       const pWeHiver = winterWeRecs.length > 0 ? (winterWeRecs.reduce((a,r) => a+r.val,0) / winterWeRecs.length) : 0;
@@ -11112,6 +11317,8 @@ nom;date;ID de la variable;valeur
       // 7. Hourly Profiles for 24h
       const profileSemaineHiver = new Array(24).fill(0);
       const countSemaineHiver = new Array(24).fill(0);
+      const profileVacancesHiver = new Array(24).fill(0);
+      const countVacancesHiver = new Array(24).fill(0);
       const profileWeHiver = new Array(24).fill(0);
       const countWeHiver = new Array(24).fill(0);
       const profileGlobalHiver = new Array(24).fill(0);
@@ -11125,8 +11332,14 @@ nom;date;ID de la variable;valeur
           profileGlobalHiver[h] += r.val;
           countGlobalHiver[h]++;
           if (r.dayOfWeek >= 1 && r.dayOfWeek <= 5) {
-            profileSemaineHiver[h] += r.val;
-            countSemaineHiver[h]++;
+            const isHol = cfg.schoolEnabled && cfg.isHoliday(r);
+            if (isHol) {
+              profileVacancesHiver[h] += r.val;
+              countVacancesHiver[h]++;
+            } else {
+              profileSemaineHiver[h] += r.val;
+              countSemaineHiver[h]++;
+            }
           } else {
             profileWeHiver[h] += r.val;
             countWeHiver[h]++;
@@ -11139,6 +11352,7 @@ nom;date;ID de la variable;valeur
 
       for (let h = 0; h < 24; h++) {
         profileSemaineHiver[h] = countSemaineHiver[h] > 0 ? (profileSemaineHiver[h] / countSemaineHiver[h]) : 0;
+        profileVacancesHiver[h] = countVacancesHiver[h] > 0 ? (profileVacancesHiver[h] / countVacancesHiver[h]) : null;
         profileWeHiver[h] = countWeHiver[h] > 0 ? (profileWeHiver[h] / countWeHiver[h]) : 0;
         profileGlobalHiver[h] = countGlobalHiver[h] > 0 ? (profileGlobalHiver[h] / countGlobalHiver[h]) : 0;
         profileEte[h] = countEte[h] > 0 ? (profileEte[h] / countEte[h]) : 0;
@@ -11298,6 +11512,7 @@ nom;date;ID de la variable;valeur
         pMax,
         pMaxDateStr,
         profileSemaineHiver,
+        profileVacancesHiver,
         profileWeHiver,
         profileGlobalHiver,
         profileEte,
@@ -11343,6 +11558,7 @@ nom;date;ID de la variable;valeur
       // Collect values from all currently active curves to dynamically determine Y scale
       const activeVals = [];
       if (curves.semaineHiver && stats.profileSemaineHiver) activeVals.push(...stats.profileSemaineHiver);
+      if (curves.vacancesHiver && stats.profileVacancesHiver) activeVals.push(...stats.profileVacancesHiver);
       if (curves.weHiver && stats.profileWeHiver) activeVals.push(...stats.profileWeHiver);
       if (curves.globalHiver && stats.profileGlobalHiver) activeVals.push(...stats.profileGlobalHiver);
       if (curves.ete && stats.profileEte) activeVals.push(...stats.profileEte);
@@ -11455,13 +11671,18 @@ nom;date;ID de la variable;valeur
         plotLine(stats.profileGlobalHiver, '#8b5cf6', 'rgba(139, 92, 246, 0.05)', 3, [6, 4]);
       }
 
+      // Draw school holidays winter curve (teal #0d9488)
+      if (curves.vacancesHiver && stats.profileVacancesHiver) {
+        plotLine(stats.profileVacancesHiver, '#0d9488', 'rgba(13, 148, 136, 0.05)', 2.8, [5, 3]);
+      }
+
       // Draw weekday winter curve (red)
       if (curves.semaineHiver) {
         plotLine(stats.profileSemaineHiver, '#ef4444', null, 3.5);
       }
 
       // If all curves are hidden
-      if (!curves.semaineHiver && !curves.weHiver && !curves.ete && !curves.globalHiver) {
+      if (!curves.semaineHiver && !curves.vacancesHiver && !curves.weHiver && !curves.ete && !curves.globalHiver) {
         ctx.fillStyle = '#64748b';
         ctx.font = '13px sans-serif';
         ctx.textAlign = 'center';
@@ -11479,10 +11700,17 @@ nom;date;ID de la variable;valeur
           const h = Math.max(0, Math.min(23, Math.round(hRatio * 23)));
           const tooltip = document.getElementById('chart-tooltip');
 
+          const isSchool = stats.cfg && stats.cfg.schoolEnabled;
+          const weekLabel = isSchool ? 'Semaine hiver hors vacances' : 'Semaine Hiver';
+
           let html = `<strong>Heure : ${h}h00</strong><br>`;
           let itemsCount = 0;
           if (curves.semaineHiver && stats.profileSemaineHiver) {
-            html += `<span style="color:#ef4444;">● Semaine Hiver : ${stats.profileSemaineHiver[h].toFixed(2)} kW</span><br>`;
+            html += `<span style="color:#ef4444;">● ${weekLabel} : ${stats.profileSemaineHiver[h].toFixed(2)} kW</span><br>`;
+            itemsCount++;
+          }
+          if (curves.vacancesHiver && stats.profileVacancesHiver) {
+            html += `<span style="color:#0d9488;">● Vacances Hiver : ${stats.profileVacancesHiver[h].toFixed(2)} kW</span><br>`;
             itemsCount++;
           }
           if (curves.weHiver && stats.profileWeHiver) {
@@ -12024,6 +12252,7 @@ nom;date;ID de la variable;valeur
           const act = stats.profileSemaineHiver[h];
           const sim = simProfile[h];
           const diff = act - sim;
+          const actLabel = stats.cfg.schoolEnabled ? 'Actuel (hors vacances)' : 'Actuel';
 
           const tooltip = document.getElementById('chart-tooltip');
           tooltip.style.display = 'block';
@@ -12031,10 +12260,10 @@ nom;date;ID de la variable;valeur
           tooltip.style.top = (my - 20) + 'px';
           tooltip.innerHTML = `
             <strong>Heure : ${h}h00</strong><br>
-            <span style="color:#ef4444;">● Actuel : ${act.toFixed(2)} kW</span><br>
+            <span style="color:#ef4444;">● ${actLabel} : ${act.toFixed(2)} kW</span><br>
             <span style="color:#10b981;">● Avec Réduit : ${sim.toFixed(2)} kW</span><br>
             <span style="color:#38bdf8;">● Talon été : ${stats.pTalonEte.toFixed(2)} kW</span><br>
-            ${diff > 0.05 ? `<strong style="color:#10b981;">Économie : -${diff.toFixed(2)} kW (-${((diff/act)*100).toFixed(0)}%)</strong>` : '<em>Période normale de confort</em>'}
+            ${diff > 0.05 ? `<strong style="color:#10b981;">Économie : -${diff.toFixed(2)} kW (-${((diff/act)*100).toFixed(0)}%)</strong>` : '<em>Période normale de confort (identique)</em>'}
           `;
         } else {
           document.getElementById('chart-tooltip').style.display = 'none';
