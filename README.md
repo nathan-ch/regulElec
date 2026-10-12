@@ -84,8 +84,6 @@ L'application accepte nativement les exports de courbe de charge horaire issus d
 
 - Ce projet est un **projet personnel** développé par **Nathan Château** ([chateaunathan@proton.me](mailto:chateaunathan@proton.me)).
 
----
-
  ## Utilisation de l'IA
  
  - **Mention IA** : Ce projet a été développé en utilisant une IA générative. L'utilisation de l'IA a permis de créer rapidement cet outil libre, utile, léger et sans serveur.
