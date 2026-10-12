@@ -3,7 +3,6 @@
 [![Licence: MIT](https://img.shields.io/badge/Licence-MIT-blue.svg)](LICENSE)
 [![Zero Backend](https://img.shields.io/badge/Backend-Aucun%20(100%25%20Local)-brightgreen.svg)]()
 [![JavaScript](https://img.shields.io/badge/Techno-HTML5%20%2F%20Vanilla%20JS-yellow.svg)]()
-[![Made with AI](https://img.shields.io/badge/D%C3%A9velopp%C3%A9%20avec-IA%20assist%C3%A9e-blueviolet.svg)]()
 
 > **Régul'Elec** est un outil web léger, autonome et 100 % exécuté côté client, conçu pour analyser les courbes de charge électriques horaires (exports CSV Enedis) et diagnostiquer la qualité de régulation du chauffage électrique (et de la climatisation).
 
